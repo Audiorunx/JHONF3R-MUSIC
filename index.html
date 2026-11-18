@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JHONF3R</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Un solo mundo visual: escenario a oscuras, luz ámbar de foco, turquesa de monitor.
+     Layout: columna única de móvil, pestañas arriba, el reproductor siempre primero. */
+  color-scheme: dark;
+  --fondo:#141222;
+  --panel:#1e1b33;
+  --panel-2:#292545;
+  --linea:#3a3560;
+  --texto:#f1eefb;
+  --tenue:#a9a3c9;
+  --foco:#ffb347;
+  --foco-tinta:#2a1a00;
+  --monitor:#4fd6c4;
+  --alerta:#ff7a7a;
+  --display:"Bricolage Grotesque","Trebuchet MS",sans-serif;
+  --cuerpo:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--fondo);color:var(--texto);font-family:var(--cuerpo);font-size:16px;line-height:1.45}
+.app{max-width:720px;margin:0 auto;padding:16px 16px 48px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:800;font-size:28px;margin:0;letter-spacing:-.02em}
+h1 span{color:var(--foco)}
+header p{margin:0;color:var(--tenue);font-size:14px}
+h2{font-family:var(--display);font-weight:600;font-size:20px;margin:0;text-wrap:balance}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--monitor);outline-offset:2px}
+
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--panel);padding:4px;border-radius:12px;position:sticky;top:8px;z-index:5;border:1px solid var(--linea)}
+.tabs button{background:none;border:0;padding:10px 4px;border-radius:9px;font-weight:600;font-size:14px;color:var(--tenue)}
+.tabs button[aria-selected="true"]{background:var(--foco);color:var(--foco-tinta)}
+
+.vista{display:none;flex-direction:column;gap:16px}
+.vista.activa{display:flex}
+
+.escena{position:relative;background:#000;border-radius:14px;overflow:hidden;aspect-ratio:16/9;border:1px solid var(--linea)}
+.escena video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+.escena iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.cartel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;text-align:center;
+  background:radial-gradient(ellipse at 50% -10%,rgba(255,179,71,.35),transparent 60%),#0d0b18}
+.cartel[hidden]{display:none}
+.cartel b{font-family:var(--display);font-size:22px;line-height:1.15;overflow-wrap:anywhere}
+.cartel small{color:var(--tenue)}
+.pc{position:absolute;bottom:8px;left:8px;background:rgba(20,18,34,.8);border:1px solid var(--linea);border-radius:8px;padding:6px 10px;font-size:13px}
+
+.titulo{display:flex;flex-direction:column;gap:2px}
+.titulo b{font-size:18px;overflow-wrap:anywhere}
+.titulo small{color:var(--tenue)}
+
+.barra{display:flex;align-items:center;gap:10px;font-variant-numeric:tabular-nums;font-size:13px;color:var(--tenue)}
+input[type=range]{flex:1;min-width:0;accent-color:var(--foco);height:28px}
+
+.transporte{display:flex;justify-content:center;align-items:center;gap:20px}
+.transporte button{background:var(--panel-2);border:1px solid var(--linea);border-radius:50%;width:52px;height:52px;display:grid;place-items:center}
+.transporte button.principal{width:72px;height:72px;background:var(--foco);border-color:var(--foco);color:var(--foco-tinta)}
+.transporte svg{width:22px;height:22px;fill:currentColor}
+.transporte .principal svg{width:30px;height:30px}
+
+.controles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:480px){.controles{grid-template-columns:1fr}}
+.tarjeta{background:var(--panel);border:1px solid var(--linea);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.tarjeta .cab{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tarjeta .cab span{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:12px;color:var(--tenue)}
+.enlace{background:none;border:0;color:var(--monitor);padding:4px;font-size:13px;text-decoration:underline}
+.tono{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tono button{width:52px;height:52px;border-radius:12px;background:var(--panel-2);border:1px solid var(--linea);font-size:26px;font-weight:700;line-height:1}
+.tono output{display:flex;flex-direction:column;align-items:center;font-variant-numeric:tabular-nums}
+.tono output b{font-family:var(--display);font-size:34px;line-height:1;color:var(--foco)}
+.tono output small,.valor small{color:var(--tenue);font-size:12px}
+.valor{display:flex;align-items:baseline;gap:6px;font-variant-numeric:tabular-nums}
+.valor b{font-family:var(--display);font-size:28px;color:var(--monitor);line-height:1}
+.fila{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.fila label{display:flex;align-items:center;gap:8px;font-size:14px}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--foco)}
+
+.boton{background:var(--panel-2);border:1px solid var(--linea);border-radius:10px;padding:10px 14px;font-weight:600;font-size:14px;text-decoration:none;color:var(--texto);display:inline-flex;align-items:center;gap:6px}
+.boton.fuerte{background:var(--foco);border-color:var(--foco);color:var(--foco-tinta)}
+.boton.peligro{color:var(--alerta)}
+.boton.chico{padding:7px 10px;font-size:13px}
+input[type=text],input[type=url],select{background:var(--fondo);border:1px solid var(--linea);border-radius:10px;padding:10px 12px;min-width:0}
+input[type=text],input[type=url]{flex:1 1 160px}
+select{max-width:100%}
+form{display:flex;gap:8px;flex-wrap:wrap}
+
+.lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.item{background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.item.sonando{border-color:var(--foco)}
+.item .nombre{font-weight:600;overflow-wrap:anywhere}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12px;border-radius:999px;padding:2px 9px;border:1px solid var(--linea);color:var(--tenue)}
+.chip.audio{color:var(--monitor);border-color:var(--monitor)}
+.chip.video{color:var(--foco);border-color:var(--foco)}
+.chip.yt{color:var(--alerta);border-color:var(--alerta)}
+.acciones{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.vacio{color:var(--tenue);border:1px dashed var(--linea);border-radius:12px;padding:16px;font-size:14px}
+.nota{color:var(--tenue);font-size:13px;margin:0;max-width:65ch}
+details.item summary{cursor:pointer;font-weight:700;display:flex;justify-content:space-between;gap:8px;align-items:center}
+details.item summary small{color:var(--tenue);font-weight:400}
+#aviso{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--texto);color:var(--fondo);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:opacity .2s}
+#aviso.ver{opacity:1}
+@media (prefers-reduced-motion:reduce){#aviso{transition:none}}
+.oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>JHONF3R<span>.</span></h1>
+    <p>Reproductor para cantantes: tono, tempo y listas</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Secciones">
+    <button role="tab" id="tab-rep" data-tab="rep" aria-selected="true">Reproductor</button>
+    <button role="tab" id="tab-bib" data-tab="bib" aria-selected="false">Biblioteca</button>
+    <button role="tab" id="tab-lis" data-tab="lis" aria-selected="false">Listas</button>
+    <button role="tab" id="tab-yt" data-tab="yt" aria-selected="false">YouTube</button>
+  </nav>
+
+  <!-- REPRODUCTOR -->
+  <section class="vista activa" id="v-rep">
+    <div class="escena" id="escena">
+      <video id="media" playsinline preload="metadata"></video>
+      <div class="cartel" id="cartel">
+        <b id="cartelTitulo">Sin pista</b>
+        <small id="cartelSub">Carga un archivo en Biblioteca</small>
+        <a class="boton fuerte" id="cartelYt" target="_blank" rel="noopener" hidden>Abrir en YouTube</a>
+      </div>
+      <button class="pc" id="pantalla" type="button">Pantalla completa</button>
+    </div>
+
+    <div class="titulo">
+      <b id="pistaNombre">Sin pista</b>
+      <small id="pistaCola">Biblioteca</small>
+    </div>
+
+    <div class="barra">
+      <span id="tAhora">0:00</span>
+      <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Posición">
+      <span id="tTotal">0:00</span>
+    </div>
+
+    <div class="transporte">
+      <button type="button" id="ant" aria-label="Anterior"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+      <button type="button" id="play" class="principal" aria-label="Reproducir"><svg viewBox="0 0 24 24" id="icoPlay"><path d="M7 4v16l14-8z"/></svg></button>
+      <button type="button" id="sig" aria-label="Siguiente"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+    </div>
+
+    <div class="controles">
+      <div class="tarjeta">
+        <div class="cab"><span>Tono</span><button class="enlace" type="button" id="tonoReset">Original</button></div>
+        <div class="tono">
+          <button type="button" id="tonoMenos" aria-label="Bajar un semitono">−</button>
+          <output id="tonoOut"><b id="tonoVal">0</b><small id="tonoSub">tono original</small></output>
+          <button type="button" id="tonoMas" aria-label="Subir un semitono">+</button>
+        </div>
+      </div>
+      <div class="tarjeta">
+        <div class="cab"><span>Tempo</span><button class="enlace" type="button" id="tempoReset">100 %</button></div>
+        <div class="valor"><b id="tempoVal">100</b><small>% de la velocidad original</small></div>
+        <input type="range" id="tempo" min="50" max="150" step="1" value="100" aria-label="Tempo">
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <div class="fila">
+        <label for="vol" style="flex:1 1 200px">Volumen <input type="range" id="vol" min="0" max="100" value="100"></label>
+        <label for="auto"><input type="checkbox" id="auto" checked> Pasar a la siguiente al terminar</label>
+      </div>
+      <p class="nota">El tono y el tempo se guardan por pista. El tempo no altera el tono, y el tono no altera la velocidad.</p>
+    </div>
+  </section>
+
+  <!-- BIBLIOTECA -->
+  <section class="vista" id="v-bib">
+    <div class="fila" style="justify-content:space-between">
+      <h2>Biblioteca</h2>
+      <label class="boton fuerte" for="archivos">Cargar audio o video</label>
+      <input class="oculto" type="file" id="archivos" accept="audio/*,video/*" multiple>
+    </div>
+    <p class="nota" id="notaGuardado">Los archivos se guardan en este dispositivo, dentro del navegador. No se suben a ningún servidor.</p>
+    <ul class="lista" id="listaBib"></ul>
+  </section>
+
+  <!-- LISTAS -->
+  <section class="vista" id="v-lis">
+    <h2>Listas de pistas</h2>
+    <form id="formLista">
+      <label class="oculto" for="nombreLista">Nombre de la lista</label>
+      <input type="text" id="nombreLista" placeholder="Ej.: Show del sábado" maxlength="60" required>
+      <button class="boton fuerte" type="submit">Crear lista</button>
+    </form>
+    <div class="lista" id="listas"></div>
+  </section>
+
+  <!-- YOUTUBE -->
+  <section class="vista" id="v-yt">
+    <h2>Canal @Prestigetracks</h2>
+    <div class="fila">
+      <a class="boton fuerte" href="https://www.youtube.com/@Prestigetracks/videos" target="_blank" rel="noopener">Abrir videos del canal</a>
+    </div>
+    <div class="tarjeta">
+      <div class="cab"><span>Buscar en el canal</span></div>
+      <div class="fila">
+        <label class="oculto" for="buscaYt">Canción o artista</label>
+        <input type="text" id="buscaYt" placeholder="Canción o artista">
+        <a class="boton" id="buscaYtIr" href="https://www.youtube.com/@Prestigetracks/search" target="_blank" rel="noopener">Buscar</a>
+      </div>
+    </div>
+    <div class="tarjeta">
+      <div class="cab"><span>Guardar un video del canal</span></div>
+      <form id="formYt">
+        <label class="oculto" for="ytTitulo">Título</label>
+        <input type="text" id="ytTitulo" placeholder="Título de la canción" maxlength="80" required>
+        <label class="oculto" for="ytUrl">Enlace de YouTube</label>
+        <input type="url" id="ytUrl" placeholder="Pega el enlace del video" required>
+        <button class="boton fuerte" type="submit">Guardar</button>
+      </form>
+      <p class="nota">En YouTube, usa Compartir y Copiar enlace; también sirve el enlace de una lista de reproducción. Los videos guardados se ven dentro de JHONF3R y se pueden añadir a tus listas. En ellos funciona el tempo; el cambio de tono solo aplica a archivos locales, porque YouTube no entrega su audio a otras apps.</p>
+    </div>
+    <ul class="lista" id="listaYt"></ul>
+  </section>
+</div>
+<div id="aviso" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const fmt=t=>{if(!isFinite(t))return'0:00';t=Math.max(0,Math.floor(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
+
+/* ---------- almacenamiento ---------- */
+let db=null;const memKv=new Map();
+function abrirDB(){return new Promise(res=>{try{const r=indexedDB.open('atril',1);
+  r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('tracks'))d.createObjectStore('tracks',{keyPath:'id'});if(!d.objectStoreNames.contains('kv'))d.createObjectStore('kv');};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);r.onblocked=()=>res(null);}catch(e){res(null)}})}
+function tx(store,mode,fn){return new Promise(res=>{if(!db)return res(undefined);try{const t=db.transaction(store,mode);const rq=fn(t.objectStore(store));
+  t.oncomplete=()=>res(rq?rq.result:undefined);t.onerror=t.onabort=()=>res(undefined);}catch(e){res(undefined)}})}
+async function kvGet(k,def){const v=db?await tx('kv','readonly',s=>s.get(k)):memKv.get(k);return v===undefined?def:v}
+function kvSet(k,v){memKv.set(k,v);return tx('kv','readwrite',s=>s.put(v,k))}
+
+/* ---------- estado ---------- */
+let pistas=[];      // {id,name,kind:'audio'|'video'|'yt',blob?,url?,demo?}
+let ajustes={};     // id -> {semis,tempo}
+let listas=[];      // {id,name,items:[id]}
+let cola=[],colaIdx=-1,colaNombre='Biblioteca',actual=null,urlActual=null;
+const media=$('media');
+const porId=id=>pistas.find(p=>p.id===id);
+const locales=()=>pistas.filter(p=>p.kind!=='yt');
+const enlaces=()=>pistas.filter(p=>p.kind==='yt');
+
+function aviso(t){const a=$('aviso');a.textContent=t;a.classList.add('ver');clearTimeout(aviso.t);aviso.t=setTimeout(()=>a.classList.remove('ver'),2200)}
+
+/* ---------- pista de ejemplo (sintetizada) ---------- */
+function crearDemo(){
+  const sr=22050,dur=12,n=sr*dur,d=new Float32Array(n);
+  const acordes=[[261.63,329.63,392],[196,246.94,293.66],[220,261.63,329.63],[174.61,220,261.63]];
+  const paso=0.25;
+  for(let k=0;k<dur/paso;k++){
+    const ac=acordes[Math.floor(k/12)%4],f=ac[k%3]*(k%6>2?2:1),ini=Math.floor(k*paso*sr);
+    for(let i=0;i<sr*0.6&&ini+i<n;i++){const t=i/sr,env=Math.exp(-t*5)*Math.min(1,t*200);
+      d[ini+i]+=0.22*env*(Math.sin(2*Math.PI*f*t)+0.3*Math.sin(4*Math.PI*f*t));}
+    if(k%12===0){const fb=ac[0]/2;for(let i=0;i<sr*2.8&&ini+i<n;i++){const t=i/sr;d[ini+i]+=0.18*Math.exp(-t*0.9)*Math.min(1,t*100)*Math.sin(2*Math.PI*fb*t);}}
+  }
+  const buf=new ArrayBuffer(44+n*2),v=new DataView(buf);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++)v.setInt16(44+i*2,Math.max(-1,Math.min(1,d[i]))*32767,true);
+  return{id:'demo',name:'Pista de ejemplo (arpegio en Do)',kind:'audio',blob:new Blob([buf],{type:'audio/wav'}),demo:true};
+}
+
+/* ---------- audio: cambio de tono con líneas de retardo ---------- */
+let ctx=null,shifter=null,seco=null,mojado=null,master=null,audioOk=false;
+function crearShifter(c){
+  const bt=0.1,sr=c.sampleRate,n=Math.round(bt*sr),fn=Math.floor(n/2);
+  const mk=f=>{const b=c.createBuffer(1,n,sr),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=f(i);return b};
+  const bSube=mk(i=>1-i/n),bBaja=mk(i=>i/n);
+  const bFade=mk(i=>i<fn?Math.sqrt(i/fn):Math.sqrt(Math.max(0,(n-i)/(n-fn))));
+  const src=b=>{const s=c.createBufferSource();s.buffer=b;s.loop=true;return s};
+  const g=v=>{const x=c.createGain();x.gain.value=v;return x};
+  const entrada=g(1),salida=g(1);
+  const t0=c.currentTime+0.05,t1=t0+bt/2;
+  const gSube=[],gBaja=[],prof=[];
+  [t0,t1].forEach(t=>{
+    const del=c.createDelay(1);del.delayTime.value=0;
+    const mix=g(0),p=g(0),gs=g(0),gb=g(1);
+    const s1=src(bSube),s2=src(bBaja),sf=src(bFade);
+    s1.connect(gs);s2.connect(gb);gs.connect(p);gb.connect(p);p.connect(del.delayTime);
+    sf.connect(mix.gain);
+    entrada.connect(del);del.connect(mix);mix.connect(salida);
+    s1.start(t);s2.start(t);sf.start(t);
+    gSube.push(gs);gBaja.push(gb);prof.push(p);
+  });
+  return{entrada,salida,ratio(r){const sube=r>1,now=c.currentTime;
+    gSube.forEach(x=>x.gain.setTargetAtTime(sube?1:0,now,0.005));
+    gBaja.forEach(x=>x.gain.setTargetAtTime(sube?0:1,now,0.005));
+    prof.forEach(x=>x.gain.setTargetAtTime(bt*Math.abs(r-1),now,0.01));}};
+}
+function iniciarAudio(){
+  if(ctx){if(ctx.state==='suspended')ctx.resume().catch(()=>{});return}
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;ctx=new AC();
+    const fuente=ctx.createMediaElementSource(media);
+    shifter=crearShifter(ctx);seco=ctx.createGain();mojado=ctx.createGain();master=ctx.createGain();
+    fuente.connect(seco);fuente.connect(shifter.entrada);shifter.salida.connect(mojado);
+    seco.connect(master);mojado.connect(master);master.connect(ctx.destination);
+    audioOk=true;aplicarTono();aplicarVol();
+    if(ctx.state==='suspended')ctx.resume().catch(()=>{});
+  }catch(e){audioOk=false;ctx=ctx||null;aviso('Este navegador no permite cambiar el tono')}
+}
+function aj(){return actual?(ajustes[actual.id]||(ajustes[actual.id]={semis:0,tempo:100})):{semis:0,tempo:100}}
+function aplicarTono(){
+  const s=aj().semis;
+  $('tonoVal').textContent=(s>0?'+':'')+s;
+  const tonos=Math.abs(s)/2;
+  $('tonoSub').textContent=s===0?'tono original':(tonos+(tonos===1?' tono ':' tonos ')+(s>0?'arriba':'abajo'));
+  if(!audioOk)return;
+  const now=ctx.currentTime;
+  seco.gain.setTargetAtTime(s===0?1:0,now,0.01);mojado.gain.setTargetAtTime(s===0?0:1,now,0.01);
+  if(s!==0)shifter.ratio(Math.pow(2,s/12));
+}
+function aplicarTempo(){
+  const t=aj().tempo;$('tempo').value=t;$('tempoVal').textContent=t;
+  try{media.preservesPitch=true;media.webkitPreservesPitch=true;}catch(e){}
+  media.defaultPlaybackRate=t/100;media.playbackRate=t/100;
+  if(actual&&actual.kind==='yt')ytCmd('setPlaybackRate',[t/100]);
+}
+function aplicarVol(){const v=$('vol').value/100;if(audioOk){media.volume=1;master.gain.value=v}else media.volume=v}
+function guardarAjustes(){kvSet('ajustes',ajustes)}
+
+/* ---------- YouTube incrustado ---------- */
+let ytFrame=null,ytEstado=-1,ytDur=0,ytBloqueado=false;
+const YT='https://www.youtube.com';
+function ytEmbed(u){
+  try{const h=new URL(u);if(h.protocol!=='https:'||!/(^|\.)youtube\.com$|^youtu\.be$/.test(h.hostname))return null;
+    let v=null;const l=h.searchParams.get('list');
+    if(h.hostname==='youtu.be')v=h.pathname.slice(1).split('/')[0];
+    else if(h.pathname==='/watch')v=h.searchParams.get('v');
+    else{const m=h.pathname.match(/^\/(shorts|embed|live)\/([\w-]+)/);if(m)v=m[2]}
+    const ok=x=>x&&/^[\w-]{6,64}$/.test(x);
+    if(!ok(v))v=null;const list=ok(l)?l:null;if(!v&&!list)return null;
+    let q='playsinline=1&rel=0&enablejsapi=1&autoplay=1';
+    if(/^https?:/.test(location.origin))q+='&origin='+encodeURIComponent(location.origin);
+    if(v)return YT+'/embed/'+v+'?'+q+(list?'&list='+list:'');
+    return YT+'/embed/videoseries?list='+list+'&'+q;
+  }catch(e){return null}
+}
+function ytCmd(func,args){try{if(ytFrame&&ytFrame.contentWindow)ytFrame.contentWindow.postMessage(JSON.stringify({event:'command',func:func,args:args||[]}),YT)}catch(e){}}
+function quitarYt(){if(ytFrame){ytFrame.remove();ytFrame=null}ytEstado=-1;ytDur=0}
+function ytSinMarco(p){quitarYt();$('cartel').hidden=false;$('cartelTitulo').textContent=p.name;
+  $('cartelSub').textContent='Esta vista previa no permite incrustar YouTube. Abre JHONF3R desde su propio enlace web para ver el video aquí.';
+  const a=$('cartelYt');a.href=p.url;a.hidden=false}
+function ponerYt(p){
+  const src=ytEmbed(p.url);
+  if(!src||ytBloqueado){ytSinMarco(p);return}
+  const f=document.createElement('iframe');
+  f.title=p.name;f.allow='autoplay; encrypted-media; fullscreen; picture-in-picture';f.allowFullscreen=true;
+  f.referrerPolicy='strict-origin-when-cross-origin';
+  f.addEventListener('load',()=>{try{f.contentWindow.postMessage(JSON.stringify({event:'listening',id:'jf',channel:'widget'}),YT)}catch(e){}
+    setTimeout(()=>{if(ytFrame===f)ytCmd('setPlaybackRate',[aj().tempo/100])},1200)});
+  f.src=src;ytFrame=f;$('escena').insertBefore(f,$('cartel'));$('cartel').hidden=true;
+}
+document.addEventListener('securitypolicyviolation',e=>{
+  if(/frame-src|child-src|default-src/.test(e.effectiveDirective||e.violatedDirective||'')&&/youtu/.test(e.blockedURI||'')){
+    ytBloqueado=true;if(actual&&actual.kind==='yt')ytSinMarco(actual)}});
+window.addEventListener('message',e=>{
+  if(!ytFrame||e.source!==ytFrame.contentWindow||e.origin!==YT)return;
+  let d;try{d=typeof e.data==='string'?JSON.parse(e.data):e.data}catch(x){return}
+  const i=d&&d.info;if(!i)return;
+  if(typeof i.duration==='number'&&i.duration>0){ytDur=i.duration;$('tTotal').textContent=fmt(ytDur)}
+  if(typeof i.currentTime==='number'&&!arrastrando){$('tAhora').textContent=fmt(i.currentTime);$('seek').value=ytDur?Math.round(i.currentTime/ytDur*1000):0}
+  if(typeof i.playerState==='number'&&i.playerState!==ytEstado){const antes=ytEstado;ytEstado=i.playerState;icono();
+    if(ytEstado===0&&antes!==0&&$('auto').checked&&!/videoseries|[?&]list=/.test(ytFrame.src))mover(1)}
+});
+
+/* ---------- reproducción ---------- */
+function cargar(p,reproducir){
+  actual=p;
+  if(urlActual){URL.revokeObjectURL(urlActual);urlActual=null}
+  $('pistaNombre').textContent=p?p.name:'Sin pista';
+  $('pistaCola').textContent=p?(colaNombre+' · '+(colaIdx+1)+' de '+cola.length):'Biblioteca';
+  const cartel=$('cartel'),yt=$('cartelYt');
+  yt.hidden=true;
+  if(!p){quitarYt();media.removeAttribute('src');media.load();cartel.hidden=false;$('cartelTitulo').textContent='Sin pista';$('cartelSub').textContent='Carga un archivo en Biblioteca';pintar();return}
+  $('cartelTitulo').textContent=p.name;
+  if(p.kind==='yt'){
+    media.pause();media.removeAttribute('src');media.load();
+    quitarYt();$('seek').value=0;$('tAhora').textContent='0:00';$('tTotal').textContent='0:00';
+    ponerYt(p);
+  }else{
+    quitarYt();cartel.hidden=p.kind==='video';
+    $('cartelSub').textContent=p.demo?'Sonido de prueba para ensayar los controles':'Audio';
+    urlActual=URL.createObjectURL(p.blob);media.src=urlActual;media.load();
+    aplicarTempo();aplicarTono();
+    if(reproducir){iniciarAudio();aplicarTempo();media.play().catch(()=>aviso('No se pudo reproducir este archivo'))}
+  }
+  aplicarTono();aplicarTempo();pintar();
+}
+function tocarCola(ids,idx,nombre){cola=ids.slice();colaIdx=idx;colaNombre=nombre;cargar(porId(cola[idx]),true);irA('rep')}
+function mover(d){const i=colaIdx+d;if(i<0||i>=cola.length)return false;colaIdx=i;cargar(porId(cola[i]),true);return true}
+function icono(){const pausa=actual&&actual.kind==='yt'?(ytEstado===1||ytEstado===3):(!media.paused&&!media.ended);
+  $('icoPlay').innerHTML=pausa?'<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>':'<path d="M7 4v16l14-8z"/>';
+  $('play').setAttribute('aria-label',pausa?'Pausar':'Reproducir')}
+
+$('play').onclick=()=>{
+  if(!actual){aviso('Carga una pista en Biblioteca');return}
+  if(actual.kind==='yt'){if(!ytFrame){aviso('El video no se pudo incrustar en esta vista');return}ytCmd(ytEstado===1||ytEstado===3?'pauseVideo':'playVideo');return}
+  iniciarAudio();
+  if(media.paused)media.play().catch(()=>aviso('No se pudo reproducir este archivo'));else media.pause();
+};
+$('ant').onclick=()=>{if(media.currentTime>3||!mover(-1)){if(actual&&actual.kind==='yt')ytCmd('seekTo',[0,true]);else{try{media.currentTime=0}catch(e){}}}};
+$('sig').onclick=()=>{if(!mover(1))aviso('Es la última de la lista')};
+media.addEventListener('play',icono);media.addEventListener('pause',icono);
+media.addEventListener('ended',()=>{icono();if($('auto').checked)mover(1)});
+media.addEventListener('loadedmetadata',()=>{$('tTotal').textContent=fmt(media.duration);aplicarTempo()});
+media.addEventListener('timeupdate',()=>{if(arrastrando)return;$('tAhora').textContent=fmt(media.currentTime);
+  $('seek').value=media.duration?Math.round(media.currentTime/media.duration*1000):0});
+media.addEventListener('error',()=>{if(actual&&actual.kind!=='yt'&&media.getAttribute('src'))aviso('Este formato no es compatible con el navegador')});
+let arrastrando=false;
+const durAct=()=>actual&&actual.kind==='yt'?ytDur:media.duration;
+$('seek').addEventListener('input',()=>{arrastrando=true;const D=durAct();if(D)$('tAhora').textContent=fmt($('seek').value/1000*D)});
+$('seek').addEventListener('change',()=>{const D=durAct();if(D){const t=$('seek').value/1000*D;if(actual.kind==='yt')ytCmd('seekTo',[t,true]);else media.currentTime=t}arrastrando=false});
+
+function tono(d,abs){if(!actual){aviso('Elige una pista');return}if(actual.kind==='yt'){aviso('El tono solo se cambia en archivos locales');return}
+  iniciarAudio();const a=aj();a.semis=abs!==undefined?abs:Math.max(-12,Math.min(12,a.semis+d));aplicarTono();guardarAjustes();pintarBib()}
+$('tonoMenos').onclick=()=>tono(-1);$('tonoMas').onclick=()=>tono(1);$('tonoReset').onclick=()=>tono(0,0);
+$('tempo').addEventListener('input',()=>{if(!actual)return;aj().tempo=+$('tempo').value;aplicarTempo()});
+$('tempo').addEventListener('change',()=>{if(actual)guardarAjustes()});
+$('tempoReset').onclick=()=>{if(!actual)return;aj().tempo=100;aplicarTempo();guardarAjustes()};
+$('vol').addEventListener('input',aplicarVol);
+$('pantalla').onclick=()=>{const e=$('escena');try{
+  if(document.fullscreenElement){document.exitFullscreen()}
+  else{const f=e.requestFullscreen||e.webkitRequestFullscreen;if(!f)throw 0;const r=f.call(e);if(r&&r.catch)r.catch(()=>aviso('Pantalla completa no disponible aquí'))}
+  }catch(x){aviso('Pantalla completa no disponible aquí')}};
+
+/* ---------- pestañas ---------- */
+function irA(t){document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  document.querySelectorAll('.vista').forEach(v=>v.classList.toggle('activa',v.id==='v-'+t))}
+document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)irA(b.dataset.tab)});
+
+/* ---------- pintado ---------- */
+function selectorListas(id){
+  if(!listas.length)return'<span class="chip">Crea una lista para añadirla</span>';
+  return'<label class="oculto" for="sel-'+id+'">Añadir a lista</label><select id="sel-'+id+'" data-add="'+id+'"><option value="">Añadir a lista…</option>'+
+    listas.map(l=>'<option value="'+l.id+'">'+esc(l.name)+'</option>').join('')+'</select>';
+}
+function chipTono(id){const a=ajustes[id];if(!a)return'';let h='';
+  if(a.semis)h+='<span class="chip">Tono '+(a.semis>0?'+':'')+a.semis+'</span>';
+  if(a.tempo&&a.tempo!==100)h+='<span class="chip">Tempo '+a.tempo+' %</span>';return h}
+function pintarBib(){
+  const ps=locales();
+  $('listaBib').innerHTML=ps.length?ps.map(p=>'<li class="item'+(actual&&actual.id===p.id?' sonando':'')+'">'+
+    '<span class="nombre">'+esc(p.name)+'</span>'+
+    '<span class="chips"><span class="chip '+p.kind+'">'+(p.kind==='video'?'Video':'Audio')+'</span>'+(p.demo?'<span class="chip">Ejemplo</span>':'')+chipTono(p.id)+'</span>'+
+    '<span class="acciones"><button class="boton chico fuerte" type="button" data-play="'+p.id+'">Reproducir</button>'+
+    (p.demo?'':selectorListas(p.id)+'<button class="boton chico peligro" type="button" data-del="'+p.id+'">Eliminar</button>')+'</span></li>').join('')
+    :'<li class="vacio">Aún no hay archivos. Toca Cargar audio o video.</li>';
+}
+function pintarYt(){
+  const ps=enlaces();
+  $('listaYt').innerHTML=ps.length?ps.map(p=>'<li class="item"><span class="nombre">'+esc(p.name)+'</span>'+
+    '<span class="chips"><span class="chip yt">YouTube</span></span>'+
+    '<span class="acciones"><button class="boton chico fuerte" type="button" data-play="'+p.id+'">Ver aquí</button>'+
+    selectorListas(p.id)+'<button class="boton chico peligro" type="button" data-del="'+p.id+'">Eliminar</button></span></li>').join('')
+    :'<li class="vacio">Aún no guardaste videos del canal.</li>';
+}
+const abiertas=new Set();
+function pintarListas(){
+  $('listas').innerHTML=listas.length?listas.map(l=>{
+    const its=l.items.map(porId).filter(Boolean);
+    return'<details class="item" data-lista="'+l.id+'"'+(abiertas.has(l.id)?' open':'')+'><summary><span>'+esc(l.name)+'</span><small>'+its.length+(its.length===1?' pista':' pistas')+'</small></summary>'+
+    '<div class="acciones"><button class="boton chico fuerte" type="button" data-playlist="'+l.id+'"'+(its.length?'':' disabled')+'>Reproducir lista</button>'+
+    '<button class="boton chico peligro" type="button" data-dellist="'+l.id+'">Eliminar lista</button></div>'+
+    (its.length?'<ul class="lista">'+its.map((p,i)=>'<li class="item'+(actual&&actual.id===p.id?' sonando':'')+'"><span class="nombre">'+(i+1)+'. '+esc(p.name)+'</span>'+
+      '<span class="chips"><span class="chip '+p.kind+'">'+(p.kind==='yt'?'YouTube':p.kind==='video'?'Video':'Audio')+'</span>'+chipTono(p.id)+'</span>'+
+      '<span class="acciones"><button class="boton chico" type="button" data-li="'+l.id+'" data-i="'+i+'" data-op="play">Reproducir</button>'+
+      '<button class="boton chico" type="button" data-li="'+l.id+'" data-i="'+i+'" data-op="up" aria-label="Subir"'+(i?'':' disabled')+'>↑</button>'+
+      '<button class="boton chico" type="button" data-li="'+l.id+'" data-i="'+i+'" data-op="down" aria-label="Bajar"'+(i<its.length-1?'':' disabled')+'>↓</button>'+
+      '<button class="boton chico peligro" type="button" data-li="'+l.id+'" data-i="'+i+'" data-op="rm">Quitar</button></span></li>').join('')+'</ul>'
+      :'<p class="nota">Añade pistas desde Biblioteca o YouTube con el selector Añadir a lista.</p>')+'</details>'}).join('')
+    :'<div class="vacio">Aún no hay listas. Crea una para armar el orden de tu presentación.</div>';
+}
+function pintar(){pintarBib();pintarYt();pintarListas()}
+function limpiarListas(){listas.forEach(l=>l.items=l.items.filter(porId))}
+function guardarListas(){kvSet('listas',listas)}
+function guardarEnlaces(){kvSet('enlaces',enlaces().map(p=>({id:p.id,name:p.name,url:p.url})))}
+
+/* ---------- acciones ---------- */
+$('archivos').addEventListener('change',async e=>{
+  const fs=[...e.target.files];e.target.value='';if(!fs.length)return;
+  const sinDemo=pistas.filter(p=>!p.demo);let n=0;
+  for(const f of fs){
+    const esVideo=f.type.startsWith('video/')||/\.(mp4|m4v|webm|mkv|mov)$/i.test(f.name);
+    const p={id:uid(),name:f.name.replace(/\.[^.]+$/,''),kind:esVideo?'video':'audio',blob:f};
+    sinDemo.push(p);n++;
+    tx('tracks','readwrite',s=>s.put({id:p.id,name:p.name,kind:p.kind,blob:f}));
+  }
+  const eraDemo=actual&&actual.demo;
+  pistas=sinDemo;
+  if(eraDemo||!actual){const ids=locales().map(p=>p.id);cola=ids;colaIdx=ids.length-n;colaNombre='Biblioteca';media.pause();cargar(porId(cola[colaIdx]),false)}
+  pintar();aviso(n===1?'1 archivo cargado':n+' archivos cargados');
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+  if(d.play){const p=porId(d.play);if(!p)return;const yt=p.kind==='yt';const ids=(yt?enlaces():locales()).map(x=>x.id);tocarCola(ids,ids.indexOf(d.play),yt?'YouTube':'Biblioteca')}
+  else if(d.del){
+    const p=porId(d.del);if(!p)return;
+    pistas=pistas.filter(x=>x.id!==d.del);delete ajustes[d.del];limpiarListas();
+    if(p.kind==='yt')guardarEnlaces();else tx('tracks','readwrite',s=>s.delete(d.del));
+    guardarListas();guardarAjustes();
+    cola=cola.filter(x=>x!==d.del);
+    if(actual&&actual.id===d.del){media.pause();colaIdx=Math.min(colaIdx,cola.length-1);cargar(cola.length?porId(cola[colaIdx]):null,false)}
+    else{colaIdx=actual?cola.indexOf(actual.id):-1;pintar()}
+    aviso('Eliminado');
+  }
+  else if(d.playlist){const l=listas.find(x=>x.id===d.playlist);const ids=l.items.filter(porId);if(ids.length)tocarCola(ids,0,l.name)}
+  else if(d.dellist){listas=listas.filter(x=>x.id!==d.dellist);guardarListas();pintar();aviso('Lista eliminada')}
+  else if(d.li){
+    const l=listas.find(x=>x.id===d.li);if(!l)return;l.items=l.items.filter(porId);const i=+d.i;abiertas.add(l.id);
+    if(d.op==='play'){tocarCola(l.items,i,l.name);return}
+    if(d.op==='up'&&i>0)[l.items[i-1],l.items[i]]=[l.items[i],l.items[i-1]];
+    if(d.op==='down'&&i<l.items.length-1)[l.items[i+1],l.items[i]]=[l.items[i],l.items[i+1]];
+    if(d.op==='rm')l.items.splice(i,1);
+    guardarListas();pintarListas();
+  }
+});
+document.addEventListener('change',e=>{
+  const s=e.target.closest('select[data-add]');if(!s||!s.value)return;
+  const l=listas.find(x=>x.id===s.value);if(l){l.items.push(s.dataset.add);abiertas.add(l.id);guardarListas();pintarListas();aviso('Añadida a '+l.name)}
+  s.value='';
+});
+document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.lista){if(d.open)abiertas.add(d.dataset.lista);else abiertas.delete(d.dataset.lista)}},true);
+$('formLista').addEventListener('submit',e=>{e.preventDefault();const n=$('nombreLista').value.trim();if(!n)return;
+  const l={id:uid(),name:n,items:[]};listas.push(l);abiertas.add(l.id);$('nombreLista').value='';guardarListas();pintar();aviso('Lista creada')});
+$('buscaYt').addEventListener('input',()=>{const q=$('buscaYt').value.trim();
+  $('buscaYtIr').href='https://www.youtube.com/@Prestigetracks/search'+(q?'?query='+encodeURIComponent(q):'')});
+$('formYt').addEventListener('submit',e=>{e.preventDefault();
+  const t=$('ytTitulo').value.trim(),u=$('ytUrl').value.trim();
+  if(!ytEmbed(u)){aviso('Pega el enlace de un video o lista de YouTube');return}
+  pistas.push({id:uid(),name:t,kind:'yt',url:u});$('ytTitulo').value='';$('ytUrl').value='';guardarEnlaces();pintar();aviso('Video guardado')});
+
+/* ---------- arranque ---------- */
+(async function(){
+  db=await abrirDB();
+  if(!db)$('notaGuardado').textContent='Este navegador no permite guardar la biblioteca: los archivos se mantienen solo mientras la página siga abierta.';
+  const guardadas=(await tx('tracks','readonly',s=>s.getAll()))||[];
+  ajustes=await kvGet('ajustes',{});listas=await kvGet('listas',[]);
+  const links=await kvGet('enlaces',[]);
+  pistas=guardadas.filter(p=>p&&p.blob).map(p=>({id:p.id,name:p.name,kind:p.kind,blob:p.blob}))
+    .concat(links.map(l=>({id:l.id,name:l.name,kind:'yt',url:l.url})));
+  if(!locales().length){try{pistas.unshift(crearDemo())}catch(e){}}
+  const ids=locales().map(p=>p.id);
+  if(ids.length){cola=ids;colaIdx=0;cargar(porId(ids[0]),false)}else cargar(null,false);
+})();
+})();
+</script>
+</body>
+</html>
